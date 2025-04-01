@@ -116,6 +116,12 @@ export const usePosts = () => {
     return newPost;
   };
 
+  const deletePost = (postId: string) => {
+    const updatedPosts = posts.filter(post => post.id !== postId);
+    setPosts(updatedPosts);
+    localStorage.setItem("anonPosts", JSON.stringify(updatedPosts));
+  };
+
   const votePost = (postId: string, voteType: "upvote" | "downvote") => {
     if (!user) return;
     
@@ -217,6 +223,7 @@ export const usePosts = () => {
     posts,
     isLoading,
     addPost,
+    deletePost,
     votePost,
     addReaction,
     getUserVoteAndReaction,

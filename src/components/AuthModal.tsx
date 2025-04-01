@@ -2,7 +2,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/context/AuthContext";
-import { FaGoogle } from "react-icons/fa";
 import { Shield, LockKeyhole, Eye } from "lucide-react";
 
 const AuthModal = () => {
@@ -63,10 +62,7 @@ const AuthModal = () => {
                 Signing in...
               </span>
             ) : (
-              <span className="flex items-center">
-                <FaGoogle className="mr-2" />
-                Sign in with Google
-              </span>
+              <span>Sign in anonymously</span>
             )}
           </Button>
           <p className="text-xs text-center text-muted-foreground mt-2">

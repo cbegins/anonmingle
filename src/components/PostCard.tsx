@@ -16,14 +16,85 @@ const PostCard = ({ post }: PostCardProps) => {
   const { isAuthenticated } = useAuth();
   const { votePost, addReaction, getUserVoteAndReaction } = usePosts();
   const { vote: userVote, reaction: userReaction } = getUserVoteAndReaction(post.id);
+  const [animateUpvote, setAnimateUpvote] = useState(false);
+  const [animateDownvote, setAnimateDownvote] = useState(false);
+  const [localPost, setLocalPost] = useState<Post>(post);
+
+  // Update local post when prop changes
+  useState(() => {
+    setLocalPost(post);
+  });
 
   const handleVote = (voteType: "upvote" | "downvote") => {
     if (!isAuthenticated) return;
+    
+    const updatedPost = { ...localPost };
+    
+    // If user already voted the same way, remove the vote
+    if (userVote === voteType) {
+      if (voteType === "upvote") {
+        updatedPost.upvotes -= 1;
+        setAnimateUpvote(true);
+      } else {
+        updatedPost.downvotes -= 1;
+        setAnimateDownvote(true);
+      }
+    }
+    // If user voted the opposite way, switch the vote
+    else if (userVote) {
+      if (voteType === "upvote") {
+        updatedPost.upvotes += 1;
+        updatedPost.downvotes -= 1;
+        setAnimateUpvote(true);
+      } else {
+        updatedPost.downvotes += 1;
+        updatedPost.upvotes -= 1;
+        setAnimateDownvote(true);
+      }
+    }
+    // If user hasn't voted yet, add the vote
+    else {
+      if (voteType === "upvote") {
+        updatedPost.upvotes += 1;
+        setAnimateUpvote(true);
+      } else {
+        updatedPost.downvotes += 1;
+        setAnimateDownvote(true);
+      }
+    }
+    
+    setLocalPost(updatedPost);
     votePost(post.id, voteType);
+    
+    // Reset animation after a short delay
+    setTimeout(() => {
+      if (voteType === "upvote") setAnimateUpvote(false);
+      else setAnimateDownvote(false);
+    }, 300);
   };
 
   const handleReaction = (reactionType: ReactionType) => {
     if (!isAuthenticated) return;
+    
+    const updatedPost = { ...localPost };
+    const reactions = { ...updatedPost.reactions };
+    
+    // If user already reacted the same way, remove the reaction
+    if (userReaction === reactionType) {
+      reactions[reactionType] -= 1;
+    }
+    // If user reacted differently before, change the reaction
+    else if (userReaction) {
+      reactions[userReaction] -= 1;
+      reactions[reactionType] += 1;
+    }
+    // If user hasn't reacted yet, add the reaction
+    else {
+      reactions[reactionType] += 1;
+    }
+    
+    updatedPost.reactions = reactions;
+    setLocalPost(updatedPost);
     addReaction(post.id, reactionType);
   };
 
@@ -48,28 +119,28 @@ const PostCard = ({ post }: PostCardProps) => {
           <Button
             variant="ghost"
             size="sm"
-            className={`rounded-full ${userVote === "upvote" ? "text-primary bg-primary/10" : ""}`}
+            className={`rounded-full ${userVote === "upvote" ? "text-primary bg-primary/10" : ""} ${animateUpvote ? "animate-vote" : ""}`}
             onClick={() => handleVote("upvote")}
             disabled={!isAuthenticated}
           >
             <ThumbsUp size={16} className="mr-1" />
-            <span>{post.upvotes}</span>
+            <span>{localPost.upvotes}</span>
           </Button>
           <Button
             variant="ghost"
             size="sm"
-            className={`rounded-full ${userVote === "downvote" ? "text-destructive bg-destructive/10" : ""}`}
+            className={`rounded-full ${userVote === "downvote" ? "text-destructive bg-destructive/10" : ""} ${animateDownvote ? "animate-vote" : ""}`}
             onClick={() => handleVote("downvote")}
             disabled={!isAuthenticated}
           >
             <ThumbsDown size={16} className="mr-1" />
-            <span>{post.downvotes}</span>
+            <span>{localPost.downvotes}</span>
           </Button>
         </div>
         
         <ReactionButton 
           postId={post.id}
-          reactions={post.reactions}
+          reactions={localPost.reactions}
           selectedReaction={userReaction}
           onReact={handleReaction}
         />
