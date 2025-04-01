@@ -52,27 +52,53 @@ const initialPosts: Post[] = [
   },
 ];
 
+// Create a singleton store to ensure all component instances access the same data
+let globalPosts: Post[] = [];
+let listeners: (() => void)[] = [];
+
+const notifyListeners = () => {
+  listeners.forEach(listener => listener());
+};
+
 export const usePosts = () => {
   const { user } = useAuth();
-  const [posts, setPosts] = useState<Post[]>([]);
+  const [posts, setPosts] = useState<Post[]>(globalPosts);
   const [isLoading, setIsLoading] = useState(true);
   const [lastPostTime, setLastPostTime] = useState<Date | null>(null);
   
+  // Subscribe to changes
   useEffect(() => {
-    // Load posts from localStorage or use initial posts if none exist
-    const storedPosts = localStorage.getItem("anonPosts");
-    if (storedPosts) {
-      const parsedPosts = JSON.parse(storedPosts);
-      // Convert string dates back to Date objects
-      const postsWithDates = parsedPosts.map((post: any) => ({
-        ...post,
-        createdAt: new Date(post.createdAt),
-      }));
-      setPosts(postsWithDates);
-    } else {
-      setPosts(initialPosts);
-      localStorage.setItem("anonPosts", JSON.stringify(initialPosts));
+    const updatePosts = () => {
+      setPosts([...globalPosts]);
+    };
+    
+    listeners.push(updatePosts);
+    
+    return () => {
+      listeners = listeners.filter(l => l !== updatePosts);
+    };
+  }, []);
+  
+  // Initial load
+  useEffect(() => {
+    if (globalPosts.length === 0) {
+      // Load posts from localStorage or use initial posts if none exist
+      const storedPosts = localStorage.getItem("anonPosts");
+      if (storedPosts) {
+        const parsedPosts = JSON.parse(storedPosts);
+        // Convert string dates back to Date objects
+        const postsWithDates = parsedPosts.map((post: any) => ({
+          ...post,
+          createdAt: new Date(post.createdAt),
+        }));
+        globalPosts = postsWithDates;
+      } else {
+        globalPosts = initialPosts;
+        localStorage.setItem("anonPosts", JSON.stringify(initialPosts));
+      }
+      setPosts([...globalPosts]);
     }
+    
     setIsLoading(false);
     
     // Check for last post time for the current user
@@ -104,43 +130,42 @@ export const usePosts = () => {
       reactions: { like: 0, love: 0, haha: 0, wow: 0, sad: 0, angry: 0 },
     };
     
-    const updatedPosts = [newPost, ...posts];
-    setPosts(updatedPosts);
+    globalPosts = [newPost, ...globalPosts];
     
     // Save to localStorage
-    localStorage.setItem("anonPosts", JSON.stringify(updatedPosts));
+    localStorage.setItem("anonPosts", JSON.stringify(globalPosts));
     localStorage.setItem(`lastPost_${user.id}`, now.toISOString());
     
     setLastPostTime(now);
+    notifyListeners();
     
     return newPost;
   };
 
   const deletePost = (postId: string) => {
-    const updatedPosts = posts.filter(post => post.id !== postId);
-    setPosts(updatedPosts);
-    localStorage.setItem("anonPosts", JSON.stringify(updatedPosts));
+    globalPosts = globalPosts.filter(post => post.id !== postId);
+    localStorage.setItem("anonPosts", JSON.stringify(globalPosts));
+    notifyListeners();
   };
 
   const votePost = (postId: string, voteType: "upvote" | "downvote") => {
     if (!user) return;
     
-    const postIndex = posts.findIndex(post => post.id === postId);
+    const postIndex = globalPosts.findIndex(post => post.id === postId);
     if (postIndex === -1) return;
     
     // Check if user already voted (in a real app, this would be tracked properly)
     const voteKey = `vote_${user.id}_${postId}`;
     const existingVote = localStorage.getItem(voteKey);
     
-    const updatedPosts = [...posts];
-    const post = { ...updatedPosts[postIndex] };
+    const post = { ...globalPosts[postIndex] };
     
     // If user already voted the same way, remove the vote
     if (existingVote === voteType) {
       if (voteType === "upvote") {
-        post.upvotes -= 1;
+        post.upvotes = Math.max(0, post.upvotes - 1);
       } else {
-        post.downvotes -= 1;
+        post.downvotes = Math.max(0, post.downvotes - 1);
       }
       localStorage.removeItem(voteKey);
     }
@@ -148,10 +173,10 @@ export const usePosts = () => {
     else if (existingVote) {
       if (voteType === "upvote") {
         post.upvotes += 1;
-        post.downvotes -= 1;
+        post.downvotes = Math.max(0, post.downvotes - 1);
       } else {
         post.downvotes += 1;
-        post.upvotes -= 1;
+        post.upvotes = Math.max(0, post.upvotes - 1);
       }
       localStorage.setItem(voteKey, voteType);
     }
@@ -165,33 +190,32 @@ export const usePosts = () => {
       localStorage.setItem(voteKey, voteType);
     }
     
-    updatedPosts[postIndex] = post;
-    setPosts(updatedPosts);
-    localStorage.setItem("anonPosts", JSON.stringify(updatedPosts));
+    globalPosts[postIndex] = post;
+    localStorage.setItem("anonPosts", JSON.stringify(globalPosts));
+    notifyListeners();
   };
 
   const addReaction = (postId: string, reaction: ReactionType) => {
     if (!user) return;
     
-    const postIndex = posts.findIndex(post => post.id === postId);
+    const postIndex = globalPosts.findIndex(post => post.id === postId);
     if (postIndex === -1) return;
     
-    // Check if user already reacted (in a real app, this would be tracked properly)
+    // Check if user already reacted
     const reactionKey = `reaction_${user.id}_${postId}`;
     const existingReaction = localStorage.getItem(reactionKey);
     
-    const updatedPosts = [...posts];
-    const post = { ...updatedPosts[postIndex] };
+    const post = { ...globalPosts[postIndex] };
     const reactions = { ...post.reactions };
     
     // If user already reacted the same way, remove the reaction
     if (existingReaction === reaction) {
-      reactions[reaction] -= 1;
+      reactions[reaction] = Math.max(0, reactions[reaction] - 1);
       localStorage.removeItem(reactionKey);
     }
     // If user reacted differently before, change the reaction
     else if (existingReaction) {
-      reactions[existingReaction as ReactionType] -= 1;
+      reactions[existingReaction as ReactionType] = Math.max(0, reactions[existingReaction as ReactionType] - 1);
       reactions[reaction] += 1;
       localStorage.setItem(reactionKey, reaction);
     }
@@ -202,9 +226,9 @@ export const usePosts = () => {
     }
     
     post.reactions = reactions;
-    updatedPosts[postIndex] = post;
-    setPosts(updatedPosts);
-    localStorage.setItem("anonPosts", JSON.stringify(updatedPosts));
+    globalPosts[postIndex] = post;
+    localStorage.setItem("anonPosts", JSON.stringify(globalPosts));
+    notifyListeners();
   };
 
   const getUserVoteAndReaction = (postId: string) => {

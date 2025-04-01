@@ -21,35 +21,36 @@ const PostCard = ({ post, isNew = false }: PostCardProps) => {
   const [animateDownvote, setAnimateDownvote] = useState(false);
   const [localPost, setLocalPost] = useState<Post>(post);
 
-  // Update local post when prop changes
+  // Update local post when the original post changes
   useEffect(() => {
-    setLocalPost(post);
+    setLocalPost({...post});
   }, [post]);
 
   const handleVote = (voteType: "upvote" | "downvote") => {
     if (!isAuthenticated) return;
     
     const updatedPost = { ...localPost };
+    const previousVote = userVote;
     
     // If user already voted the same way, remove the vote
-    if (userVote === voteType) {
+    if (previousVote === voteType) {
       if (voteType === "upvote") {
-        updatedPost.upvotes -= 1;
+        updatedPost.upvotes = Math.max(0, updatedPost.upvotes - 1);
         setAnimateUpvote(true);
       } else {
-        updatedPost.downvotes -= 1;
+        updatedPost.downvotes = Math.max(0, updatedPost.downvotes - 1);
         setAnimateDownvote(true);
       }
     }
     // If user voted the opposite way, switch the vote
-    else if (userVote) {
+    else if (previousVote) {
       if (voteType === "upvote") {
-        updatedPost.upvotes += 1;
-        updatedPost.downvotes -= 1;
+        updatedPost.upvotes = Math.max(0, updatedPost.upvotes + 1);
+        updatedPost.downvotes = Math.max(0, updatedPost.downvotes - 1);
         setAnimateUpvote(true);
       } else {
-        updatedPost.downvotes += 1;
-        updatedPost.upvotes -= 1;
+        updatedPost.downvotes = Math.max(0, updatedPost.downvotes + 1);
+        updatedPost.upvotes = Math.max(0, updatedPost.upvotes - 1);
         setAnimateDownvote(true);
       }
     }
@@ -79,14 +80,15 @@ const PostCard = ({ post, isNew = false }: PostCardProps) => {
     
     const updatedPost = { ...localPost };
     const reactions = { ...updatedPost.reactions };
+    const previousReaction = userReaction;
     
     // If user already reacted the same way, remove the reaction
-    if (userReaction === reactionType) {
-      reactions[reactionType] -= 1;
+    if (previousReaction === reactionType) {
+      reactions[reactionType] = Math.max(0, reactions[reactionType] - 1);
     }
     // If user reacted differently before, change the reaction
-    else if (userReaction) {
-      reactions[userReaction] -= 1;
+    else if (previousReaction) {
+      reactions[previousReaction] = Math.max(0, reactions[previousReaction] - 1);
       reactions[reactionType] += 1;
     }
     // If user hasn't reacted yet, add the reaction

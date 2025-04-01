@@ -29,6 +29,7 @@ interface ReactionButtonProps {
 
 const ReactionButton = ({ postId, reactions, selectedReaction, onReact }: ReactionButtonProps) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [animating, setAnimating] = useState<ReactionType | null>(null);
   
   // Get total reactions
   const totalReactions = Object.values(reactions).reduce((sum, count) => sum + count, 0);
@@ -43,6 +44,16 @@ const ReactionButton = ({ postId, reactions, selectedReaction, onReact }: Reacti
       topReaction = reactionOptions.find(r => r.type === type) || null;
     }
   });
+  
+  const handleReact = (reactionType: ReactionType) => {
+    setAnimating(reactionType);
+    onReact(reactionType);
+    
+    // Reset animation after it completes
+    setTimeout(() => {
+      setAnimating(null);
+    }, 600);
+  };
   
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
@@ -74,9 +85,9 @@ const ReactionButton = ({ postId, reactions, selectedReaction, onReact }: Reacti
               size="sm"
               className={`reaction-button px-3 py-2 rounded-full ${
                 selectedReaction === option.type ? "bg-primary/10" : ""
-              }`}
+              } ${animating === option.type ? "animate-reaction" : ""}`}
               onClick={() => {
-                onReact(option.type);
+                handleReact(option.type);
                 setIsOpen(false);
               }}
             >
