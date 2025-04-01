@@ -14,6 +14,7 @@ interface AuthContextType {
   isLoading: boolean;
   login: () => Promise<void>;
   logout: () => void;
+  updateBio: (bio: string) => void;
 }
 
 // Create context
@@ -42,10 +43,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const login = async () => {
     setIsLoading(true);
     
-    // Simulate authentication delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
     try {
+      // Simulate Google auth flow with a loading delay for better UX
+      await new Promise(resolve => setTimeout(resolve, 1200));
+      
       // Create a new user with a random ID
       const newUser = {
         id: generateRandomUserId(),
@@ -61,13 +62,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       toast({
         title: "Logged in successfully",
         description: `Your anonymous ID: ${newUser.id}`,
+        variant: "default",
       });
     } catch (error) {
       console.error("Authentication error:", error);
       toast({
         variant: "destructive",
         title: "Authentication failed",
-        description: "Please try again later.",
+        description: "Could not connect to authentication service. Please try again.",
       });
     } finally {
       setIsLoading(false);
@@ -83,12 +85,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     });
   };
 
+  const updateBio = (bio: string) => {
+    if (!user) return;
+    
+    const updatedUser = {
+      ...user,
+      bio: bio,
+    };
+    
+    setUser(updatedUser);
+    localStorage.setItem("anonUser", JSON.stringify(updatedUser));
+    
+    toast({
+      title: "Bio updated",
+      description: "Your bio has been updated successfully.",
+    });
+  };
+
   const value = {
     user,
     isAuthenticated: !!user,
     isLoading,
     login,
     logout,
+    updateBio,
   };
 
   return (
