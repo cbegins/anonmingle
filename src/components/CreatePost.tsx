@@ -75,7 +75,7 @@ const CreatePost = () => {
   };
   
   return (
-    <Card className="mb-6">
+    <Card className="mb-6 rounded-xl overflow-hidden shadow-md">
       <CardContent className="pt-6">
         <Textarea
           ref={textareaRef}
@@ -83,7 +83,7 @@ const CreatePost = () => {
           value={content}
           onChange={(e) => setContent(e.target.value)}
           onKeyDown={handleKeyDown}
-          className="resize-none min-h-[100px]"
+          className="resize-none min-h-[100px] rounded-lg focus:ring-primary/50 transition-shadow"
           disabled={!isAuthenticated || cooldownRemaining > 0}
         />
       </CardContent>
@@ -104,6 +104,7 @@ const CreatePost = () => {
             content.length > MAX_CHARS || 
             cooldownRemaining > 0
           }
+          className="rounded-lg"
         >
           {isSubmitting ? (
             <span className="flex items-center">

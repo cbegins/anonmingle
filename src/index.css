@@ -1,4 +1,6 @@
 
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -32,6 +34,8 @@
     --border: 240 3.7% 15.9%;
     --input: 240 3.7% 15.9%;
     --ring: 250 60% 70%;
+    
+    --radius: 1rem;
   }
 }
 
@@ -40,37 +44,61 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans;
     font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  
+  button, input, textarea, select {
+    @apply rounded-lg;
+  }
+  
+  .card, .input, .button {
+    @apply rounded-xl;
   }
 }
 
 @layer components {
   .animated-card {
-    @apply transition-all duration-200 ease-in-out hover:shadow-lg hover:-translate-y-1;
+    @apply transition-all duration-300 ease-in-out hover:shadow-lg hover:-translate-y-1;
   }
   
   .reaction-button {
-    @apply hover:scale-110 transition-transform duration-100;
+    @apply hover:scale-110 transition-transform duration-200;
   }
 }
 
 .animate-reaction {
-  animation: reaction-pulse 0.3s ease-out;
+  animation: reaction-pulse 0.4s ease-out;
 }
 
 @keyframes reaction-pulse {
   0% { transform: scale(1); }
-  50% { transform: scale(1.2); }
+  50% { transform: scale(1.25); }
   100% { transform: scale(1); }
 }
 
 .animate-vote {
-  animation: vote-bounce 0.3s ease-out;
+  animation: vote-bounce 0.4s ease-out;
 }
 
 @keyframes vote-bounce {
   0% { transform: translateY(0); }
-  50% { transform: translateY(-3px); }
+  40% { transform: translateY(-5px); }
+  70% { transform: translateY(-2px); }
   100% { transform: translateY(0); }
+}
+
+.post-appear {
+  animation: smooth-appear 0.5s ease-out forwards;
+}
+
+@keyframes smooth-appear {
+  0% { 
+    opacity: 0; 
+    transform: translateY(20px);
+  }
+  100% { 
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

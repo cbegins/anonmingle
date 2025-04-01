@@ -15,11 +15,11 @@ export const PostItem = ({ post, onDelete }: PostItemProps) => {
   const timeAgo = formatDistanceToNow(new Date(post.createdAt), { addSuffix: true });
 
   return (
-    <Card className="overflow-hidden border-border/40">
+    <Card className="overflow-hidden border-border/40 rounded-xl mb-4 animated-card">
       <CardContent className="p-4">
         <div className="flex justify-between mb-2">
           <div className="flex items-center space-x-2">
-            <div className="p-1.5 bg-primary/10 rounded-md">
+            <div className="p-1.5 bg-primary/10 rounded-lg">
               <span className="font-mono text-xs font-medium text-primary">{post.userId.substring(0, 8)}</span>
             </div>
             <span className="text-xs text-muted-foreground">{timeAgo}</span>
@@ -31,12 +31,12 @@ export const PostItem = ({ post, onDelete }: PostItemProps) => {
           <span>👎 {post.downvotes}</span>
         </div>
       </CardContent>
-      <CardFooter className="bg-accent/30 p-2 flex justify-end">
+      <CardFooter className="bg-accent/30 p-2 flex justify-end rounded-b-xl">
         <Button
           variant="destructive"
           size="sm"
           onClick={() => onDelete(post.id)}
-          className="h-8"
+          className="h-8 rounded-lg"
         >
           <Trash2 size={16} className="mr-1" />
           Delete

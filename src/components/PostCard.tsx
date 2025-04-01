@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { usePosts, Post, ReactionType } from "@/hooks/usePosts";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
@@ -10,9 +10,10 @@ import { formatDistanceToNow } from "date-fns";
 
 interface PostCardProps {
   post: Post;
+  isNew?: boolean;
 }
 
-const PostCard = ({ post }: PostCardProps) => {
+const PostCard = ({ post, isNew = false }: PostCardProps) => {
   const { isAuthenticated } = useAuth();
   const { votePost, addReaction, getUserVoteAndReaction } = usePosts();
   const { vote: userVote, reaction: userReaction } = getUserVoteAndReaction(post.id);
@@ -21,9 +22,9 @@ const PostCard = ({ post }: PostCardProps) => {
   const [localPost, setLocalPost] = useState<Post>(post);
 
   // Update local post when prop changes
-  useState(() => {
+  useEffect(() => {
     setLocalPost(post);
-  });
+  }, [post]);
 
   const handleVote = (voteType: "upvote" | "downvote") => {
     if (!isAuthenticated) return;
@@ -70,7 +71,7 @@ const PostCard = ({ post }: PostCardProps) => {
     setTimeout(() => {
       if (voteType === "upvote") setAnimateUpvote(false);
       else setAnimateDownvote(false);
-    }, 300);
+    }, 400);
   };
 
   const handleReaction = (reactionType: ReactionType) => {
@@ -102,10 +103,10 @@ const PostCard = ({ post }: PostCardProps) => {
   const timeAgo = formatDistanceToNow(new Date(post.createdAt), { addSuffix: true });
 
   return (
-    <Card className="mb-4 overflow-hidden animated-card">
+    <Card className={`mb-4 overflow-hidden animated-card rounded-xl ${isNew ? 'post-appear' : ''}`}>
       <CardHeader className="p-4 pb-2 flex flex-row items-center justify-between space-y-0">
         <div className="flex items-center space-x-2">
-          <div className="p-1.5 bg-primary/10 rounded-md">
+          <div className="p-1.5 bg-primary/10 rounded-lg">
             <span className="font-mono text-xs font-medium text-primary">{post.userId.substring(0, 6)}</span>
           </div>
           <span className="text-xs text-muted-foreground">{timeAgo}</span>
